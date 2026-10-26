@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Procedimentos VPB — Base Operacional</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--line:#dfe5ee;--accent:#1457d9;--accent2:#0b3c91;--ok:#087443;--warn:#9a6700;--danger:#b42318}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(135deg,#0b2f63,#1457d9);color:#fff;padding:28px 5vw 24px;position:sticky;top:0;z-index:10;box-shadow:0 3px 14px #0002}
+header h1{margin:0 0 6px;font-size:28px}header p{margin:0;color:#dbe7ff}
+.wrap{max-width:1400px;margin:0 auto;padding:22px 5vw 50px}
+.toolbar{display:grid;grid-template-columns:1fr auto auto;gap:10px;margin-bottom:16px}
+input,select,textarea,button{font:inherit}
+input,select,textarea{border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid #1457d933;border-color:var(--accent)}
+button{border:0;border-radius:9px;padding:10px 14px;cursor:pointer;background:var(--accent);color:#fff;font-weight:700}
+button.secondary{background:#e9eef7;color:#17345f}button.danger{background:#b42318}
+button.small{padding:7px 10px;font-size:13px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-size:13px}
+.layout{display:grid;grid-template-columns:230px 1fr;gap:18px}
+nav{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;height:max-content;position:sticky;top:115px}
+nav h3{margin:5px 8px 10px;font-size:14px}nav button{width:100%;text-align:left;margin:3px 0;background:transparent;color:#344054;font-weight:600}
+nav button:hover,nav button.active{background:#edf3ff;color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:17px;box-shadow:0 2px 7px #1018280a}
+.card h2{font-size:17px;margin:7px 0 8px}.meta{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-block;border-radius:99px;padding:4px 8px;background:#eaf2ff;color:#1246a6;font-size:11px;font-weight:800}
+.badge.ok{background:#e9f7ef;color:var(--ok)}.body{font-size:14px;line-height:1.5;margin:12px 0}
+.card ol{padding-left:20px;font-size:14px;line-height:1.5}.card li{margin:5px 0}
+pre{white-space:pre-wrap;background:#101828;color:#eef4ff;border-radius:9px;padding:12px;font-size:12px;line-height:1.45;overflow:auto}
+.actions{display:flex;gap:7px;margin-top:13px}.actions button{flex:0 0 auto}
+.empty{background:#fff;border:1px dashed #b9c4d5;padding:30px;border-radius:12px;text-align:center;color:var(--muted)}
+section{margin-top:28px}.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+details{background:#fff;border:1px solid var(--line);border-radius:10px;margin:8px 0;padding:10px 12px}summary{cursor:pointer;font-weight:700}
+#editor{display:none;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
+.help{font-size:12px;color:var(--muted);margin-top:6px}
+footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center}
+@media(max-width:850px){.layout{grid-template-columns:1fr}nav{position:static}.toolbar{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}}
+@media print{header,.toolbar,nav,.actions,#editor,#historyControls,footer{display:none!important}.wrap{padding:0}.layout{display:block}.grid{grid-template-columns:1fr 1fr}.card{break-inside:avoid}}
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header>
+  <h1>Procedimentos VPB — Base Operacional</h1>
+  <p>Base organizada por assunto, priorizando os alinhamentos mais recentes para reduzir conflito entre procedimentos antigos e novos.</p>
+</header>
+<div class="wrap">
+  <div class="toolbar">
+    <input id="search" placeholder="🔎 Pesquisar: assunto, palavra, JIRA, LTE, massiva, vandalismo...">
+    <select id="cat"><option value="">Todas as categorias</option></select>
+    <button onclick="newItem()">＋ Novo procedimento</button>
+  </div>
+  <div class="stat" id="connectionStatus" role="status">Conectando à base compartilhada...</div>
+  <div class="stats">
+    <div class="stat"><b id="count">0</b> procedimentos exibidos</div>
+    <div class="stat"><b>Critério:</b> alinhamento mais recente prevalece</div>
+    <button class="secondary small" onclick="exportData()">Exportar base</button>
+    <button class="secondary small" onclick="document.getElementById('importFile').click()">Importar base</button>
+    <button class="secondary small" onclick="window.print()">Imprimir</button>
+    <input id="importFile" type="file" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+
+  <div id="editor">
+    <div class="section-title"><h2 id="editorTitle">Novo procedimento</h2><button class="secondary small" onclick="closeEditor()">Fechar</button></div>
+    <div class="formgrid">
+      <input id="f_title" placeholder="Título">
+      <input id="f_cat" placeholder="Categoria">
+      <input id="f_date" type="date">
+      <select id="f_status"><option>VIGENTE</option><option>EVENTUAL</option><option>ARQUIVADO</option></select>
+      <input id="f_keywords" class="full" placeholder="Palavras-chave separadas por vírgula">
+      <textarea id="f_body" class="full" rows="4" placeholder="Regra/procedimento"></textarea>
+      <textarea id="f_steps" class="full" rows="5" placeholder="Passos, um por linha"></textarea>
+      <textarea id="f_template" class="full" rows="7" placeholder="Máscara/modelo (opcional)"></textarea>
+      <input id="f_source" placeholder="Fonte/data do alinhamento">
+    </div>
+    <div class="actions">
+      <button onclick="saveItem()">Salvar</button>
+      <button class="secondary" onclick="closeEditor()">Cancelar</button>
+    </div>
+    <div class="help">As alterações são compartilhadas com todos os visitantes por meio do banco de dados na nuvem.</div>
+  </div>
+
+  <div class="layout">
+    <nav><h3>Filtrar por assunto</h3><div id="navCats"></div></nav>
+    <main>
+      <div id="grid" class="grid"></div>
+    </main>
+  </div>
+  <footer>Base criada a partir do arquivo “Conversa do WhatsApp com Alinhamento VPB.txt”. Antes de publicar uma mudança operacional, confirme o alinhamento vigente.</footer>
+</div>
+
+<script>
+const INITIAL = [{"id": "p001", "cat": "Eventos críticos", "title": "Massiva / Concentrador — comunicação de inoperância", "date": "09/06/2026", "status": "VIGENTE", "keywords": "massiva concentrador PI novo inoperante eventos críticos", "body": "Casos de inoperância de PI NOVO — Massiva e Concentrador — devem ser informados no grupo criado para essa finalidade, com os gestores da Avantia e o diretor do DVM. Usar somente a máscara com os dados da falha: localidade, quantidade de pontos e horário da queda.", "steps": ["Informar a falha no grupo de eventos críticos.", "Usar a máscara padronizada.", "Informar localidade, quantidade de pontos e horário da queda.", "Não acrescentar informações fora do padrão da máscara sem necessidade."], "source": "09/06/2026"}, {"id": "p002", "cat": "Eventos críticos", "title": "Falha massiva acima de 50 circuitos/concentradores", "date": "03/08/2026", "status": "VIGENTE", "keywords": "massiva 50 circuitos concentradores Osvaldo DVM escalonamento", "body": "Para falha massiva acima de 50 circuitos e concentradores, além da mensagem no grupo, entrar em contato com Osvaldo por telefone e informar no grupo se ele está ciente ou se não foi possível contato.", "steps": ["Enviar a mensagem no grupo.", "Realizar contato telefônico com Osvaldo.", "Registrar no grupo se houve contato ou se não foi possível.", "Em falha grave, se o contato não for atendido, deixar também mensagem no WhatsApp, conforme alinhamento de 24/08/2026."], "source": "03/08/2026 + 24/08/2026"}, {"id": "p003", "cat": "Concentradores", "title": "Concentrador fora — escalonamento após 30 minutos", "date": "28/05/2026", "status": "VIGENTE", "keywords": "concentrador fora 30 minutos Osvaldo DVM ligação whatsapp", "body": "Quando um concentrador estiver fora e não retornar em 30 minutos, avisar Osvaldo, diretor da DVM, por ligação telefônica. Se não atender, registrar nota no chamado e enviar WhatsApp. Notificar também a gestão definida no alinhamento.", "steps": ["Aguardar o limite de 30 minutos.", "Ligar para Osvaldo.", "Se não atender, registrar nota no chamado.", "Enviar WhatsApp notificando a falha.", "Notificar a gestão conforme o fluxo."], "source": "28/05/2026"}, {"id": "p004", "cat": "PI Novo", "title": "Atendimento de link após 18h", "date": "21/08/2026", "status": "VIGENTE", "keywords": "PI novo link 18 horas atendimento noturno Jira", "body": "Para chamados no JIRA de atendimento de link (PI NOVO) após as 18:00h, inserir a nota padronizada informando que não será possível o atendimento devido ao horário noturno e que a equipe técnica retomará o atendimento a partir das 8:00h.", "steps": ["Inserir a nota no JIRA.", "Usar a redação padronizada do alinhamento.", "Registrar que a equipe técnica retomará o atendimento às 08:00h."], "source": "21/08/2026"}, {"id": "p005", "cat": "PI Novo", "title": "Remanejamento de PI Novo", "date": "26/08/2026", "status": "VIGENTE", "keywords": "remanejamento PI novo SEI", "body": "Todo remanejamento de PI NOVO precisa ser realizado via processo SEI.", "steps": ["Abrir/seguir o processo SEI correspondente.", "Manter o registro do processo associado à demanda."], "source": "26/08/2026"}, {"id": "p006", "cat": "PI Novo", "title": "Encerramento — link AVANTIA x CPE AVANTIA", "date": "25/06/2026", "status": "VIGENTE", "keywords": "PI novo Avantia link CPE encerramento cabo roteador", "body": "Para PI NOVO com links entregues pela AVANTIA: problema no link deve ser encerrado como “LINK - AVANTIA”. Problema relacionado a cabo ou roteador deve ser encerrado como “CPE - AVANTIA”.", "steps": ["Problema no link AVANTIA → encerramento “LINK - AVANTIA”.", "Problema em cabo ou roteador → encerramento “CPE - AVANTIA”.", "Demais situações → seguir o fluxo já existente."], "source": "25/06/2026"}, {"id": "p007", "cat": "Vandalismo", "title": "Novo ponto de imagem vandalizado", "date": "13/08/2026", "status": "VIGENTE", "keywords": "vandalismo ponto vandalizado RACT BO DVM CIST VIDPOL", "body": "Para todo novo ponto de imagem identificado como vandalizado, anexar a RACT da Avantia e o B.O., marcar o campo “Ponto vandalizado” como “Sim” e encaminhar para DVM/CIST. Após retorno com “Vandalismo validado”, encerrar o VIDPOL.", "steps": ["Anexar RACT da Avantia e Boletim de Ocorrência.", "No JIRA, preencher “Ponto vandalizado” = “Sim”.", "Encaminhar para DVM/CIST.", "Aguardar a validação do DVM.", "Com “Vandalismo validado”, encerrar o VIDPOL."], "source": "13/08/2026"}, {"id": "p008", "cat": "DVM / CIST", "title": "Triagem aguardando aprovação do Osvaldo", "date": "04/09/2026", "status": "VIGENTE", "keywords": "triagem aprovação Osvaldo quinto dia útil DVM CIST", "body": "Chamados que estiverem na triagem aguardando aprovação do Osvaldo Dias e ultrapassarem o 5º dia útil devem ser encaminhados para a fila DVM/CIST.", "steps": ["Monitorar o prazo na triagem.", "Ao ultrapassar o 5º dia útil, encaminhar para DVM/CIST.", "Registrar a movimentação no chamado."], "source": "04/09/2026"}, {"id": "p009", "cat": "LTE", "title": "Instalação, manutenção e desinstalação de terminal LTE", "date": "04/09/2026", "status": "VIGENTE", "keywords": "LTE instalação manutenção desinstalação Teledata Yure Octave fechamento", "body": "Para chamados de instalação, manutenção e desinstalação de terminal LTE: após atuação da Teledata, enviar para Yure e, em seguida, para Octave. O chamado não pode ser fechado antes dessas etapas. Em manutenção, o encerramento deve refletir a ação realmente executada pela Teledata, e não simplesmente “demanda atendida”.", "steps": ["Aguardar/registrar atuação da Teledata.", "Enviar para Yure.", "Depois enviar para Octave.", "Não encerrar antes dessas etapas.", "Na manutenção, conferir a ação executada pela Teledata.", "Encerrar conforme a ação realizada."], "source": "04/09/2026"}, {"id": "p010", "cat": "Incidentes / Requisições", "title": "Reincidência elétrica — retorno antes da atuação da Avantia", "date": "12/08/2026", "status": "VIGENTE", "keywords": "reincidência elétrica Avantia incidente requisição", "body": "Quando um incidente encaminhado para a AVANTIA para tratar reincidência elétrica retornar antes da atuação do técnico da AVANTIA, encerrar o INCIDENTE e abrir uma REQUISIÇÃO.", "steps": ["Confirmar que o incidente retornou antes da atuação técnica da Avantia.", "Encerrar o INCIDENTE.", "Abrir uma REQUISIÇÃO para a tratativa correspondente."], "source": "12/08/2026"}, {"id": "p011", "cat": "TI / TLD", "title": "Encaminhamento para TLD — comunicação prévia", "date": "21/08/2026", "status": "VIGENTE", "keywords": "TI TLD Teledata comunicação prévia fila", "body": "Atenção aos chamados de TI encaminhados para a fila da TLD sem comunicação prévia. O alinhamento de 21/08/2026 reforça que deve ser seguido o procedimento já estabelecido, evitando encaminhamento sem a comunicação necessária.", "steps": ["Antes de encaminhar para TLD, realizar a comunicação prevista no fluxo.", "Registrar no chamado quando aplicável.", "Evitar encaminhamento direto sem aviso."], "source": "21/08/2026"}, {"id": "p012", "cat": "CICOM / Cliente", "title": "Solicitação de CICOM via residente", "date": "15/07/2026", "status": "VIGENTE", "keywords": "CICOM residente coordenador local solicitação", "body": "Toda solicitação vinda dos CICOMs pelo residente deve ter o conhecimento do coordenador do local.", "steps": ["Receber a solicitação.", "Confirmar ciência do coordenador do local.", "Prosseguir com a tratativa."], "source": "15/07/2026"}, {"id": "p013", "cat": "SGTO / Validações", "title": "Fluxo de validações do Consórcio", "date": "26/08/2026", "status": "VIGENTE", "keywords": "Consórcio validações SGTO Victor Claudio coordenador redes infraestrutura", "body": "Foi definido o fluxo de validações do Consórcio para chamados registrados no JIRA, com atuação conjunta no âmbito de Redes e Infraestrutura da SGTO. A composição informada no alinhamento: Victor Carvalho Santos como interino e Cláudio Marcos Vilas Boas Soares como suplente.", "steps": ["Incluir a demanda no fluxo de validações do Consórcio quando aplicável.", "Considerar Victor Carvalho Santos como interino.", "Considerar Cláudio Marcos Vilas Boas Soares como suplente."], "source": "26/08/2026"}, {"id": "p014", "cat": "Serviços", "title": "Serviço SIP incorporado ao Vídeo Polícia", "date": "27/07/2026", "status": "VIGENTE", "keywords": "SIP serviço cliente reclamação Video Polícia circuitos", "body": "O serviço SIP identificado no alinhamento passou a fazer parte do Vídeo Polícia. Caso o cliente reclame, a demanda deve ser tratada dentro do contexto do projeto.", "steps": ["Identificar reclamações relacionadas ao serviço SIP.", "Considerar a demanda como parte do Vídeo Polícia.", "Seguir o fluxo operacional correspondente."], "source": "27/07/2026"}, {"id": "p015", "cat": "Infraestrutura", "title": "Estações em desmobilização — não escalar para VTAL", "date": "01/07/2026", "status": "VIGENTE", "keywords": "desmobilização estação VTAL escalonamento", "body": "As estações listadas no alinhamento permanecem em desmobilização. Para elas, não cabe escalonamento na VTAL; o tratamento está sendo conduzido via diretoria da Oi.", "steps": ["Consultar a lista vigente de estações em desmobilização.", "Não escalar para VTAL quando a estação estiver nessa condição.", "Direcionar o tratamento pela diretoria da Oi."], "source": "01/07/2026"}, {"id": "p016", "cat": "Validação", "title": "Equipe em VALIDAÇÃO — monitorar fila", "date": "28/05/2026", "status": "VIGENTE", "keywords": "validação fila backlog monitorar", "body": "Quem estiver na VALIDAÇÃO não precisa extrair e enviar Backlog, mas deve monitorar a fila e mantê-la sempre atualizada.", "steps": ["Não extrair/enviar Backlog enquanto estiver na VALIDAÇÃO.", "Monitorar a fila.", "Manter a fila atualizada."], "source": "28/05/2026"}, {"id": "p017", "cat": "Comunicação", "title": "Máscara padrão de evento crítico — Massiva", "date": "18/06/2026", "status": "VIGENTE", "keywords": "máscara massiva evento crítico cliente reclamante técnico subcategoria local elemento descrição falha", "body": "Modelo de máscara indicado no alinhamento para comunicação de massiva no grupo do cliente.", "template": "CLIENTE: VIDEO POLICIA BA\nRECLAMANTE: CEC / CONTATO: 0800 021 6505\nTÉCNICO:\nSUBCATEGORIA: PI NOVO\nLOCAL:\nELEMENTO: MASSIVA / [QUANTIDADE] PONTOS\nDESCRICAO FALHA: INOPERANTE\nData/horário da falha:\nVIDPOL:", "source": "18/06/2026"}, {"id": "p018", "cat": "Comunicação", "title": "Máscara padrão — Concentrador", "date": "10/06/2026", "status": "VIGENTE", "keywords": "máscara concentrador proativo cliente designação VIDPOL", "body": "Modelo enviado como referência para comunicação de evento crítico de concentrador.", "template": "<<< MÁSCARA DE ABERTURA PROATIVA - CONCENTRADOR >>>\nCLIENTE: VÍDEO POLÍCIA BAHIA\nRECLAMANTE: CEC VPB - CONTATO: 0800 021 6505\nTÉCNICO:\nLOCALIDADE:\nDESIGNAÇÃO OI:\nVIDPOL:\nFALHA: SERVIÇO INOPERANTE\nDATA E HORÁRIO DA ABERTURA:", "source": "10/06/2026"}, {"id": "p019", "cat": "Acessos", "title": "Liberação de acesso DVM — destinatário atualizado", "date": "09/06/2026", "status": "VIGENTE", "keywords": "DVM acesso liberação email Mayara Fernanda Fabiano", "body": "O alinhamento de 09/06/2026 determinou excluir Mayara e Fernanda dos e-mails de liberação de acesso ao DVM, pois não fazem mais parte do quadro. O envio indicado passou a ser para Fabiano Lima.", "steps": ["Não utilizar Mayara ou Fernanda nas solicitações de liberação de acesso.", "Enviar para Fabiano Lima.", "Manter o registro da solicitação no chamado/e-mail."], "source": "09/06/2026"}, {"id": "p020", "cat": "PI Novo / Massiva", "title": "Massiva — modelo único para grupo do cliente", "date": "18/06/2026", "status": "VIGENTE", "keywords": "massiva modelo grupo cliente VIDPOL serrinha", "body": "Foi solicitado o uso de somente um modelo de massiva para envio no grupo do cliente. O exemplo registrado contém cliente, reclamante, técnico, subcategoria, local, quantidade de pontos, descrição da falha, data/hora e VIDPOL.", "steps": ["Usar o modelo único de massiva.", "Preencher todos os campos disponíveis.", "Evitar criar modelos paralelos sem novo alinhamento."], "source": "18/06/2026"}];
+// CONFIGURAÇÃO: preencha estes dois valores com os dados do projeto Supabase.
+// Use apenas a chave pública "anon" / "publishable" do projeto. Nunca coloque a service_role aqui.
+const SUPABASE_URL = 'https://ggwicrxbsfxpxalrfodm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_8NUQPog45vWTGKFHxS1lig_RYtfK7Q3';
+const TABLE = 'procedimentos_vpb';
+let supabaseClient = null;
+let data = [];
+let editingId = null, selectedCat = '';
+let connected = false;
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function showStatus(message, error=false){
+  let el=document.getElementById('connectionStatus');
+  if(!el)return;
+  el.textContent=message;
+  el.style.color=error?'#b42318':'#087443';
+}
+function configReady(){
+  return SUPABASE_URL.startsWith('https://') &&
+    !SUPABASE_URL.includes('COLE_AQUI') &&
+    SUPABASE_ANON_KEY.length > 20 &&
+    !SUPABASE_ANON_KEY.includes('COLE_AQUI');
+}
+async function startDatabase(){
+  if(!configReady()){
+    showStatus('Configuração pendente: conecte o Supabase para ativar a base compartilhada.', true);
+    data = [...INITIAL];
+    render();
+    return;
+  }
+  try{
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const {data:rows,error} = await supabaseClient.from(TABLE).select('*').order('date',{ascending:false});
+    if(error) throw error;
+    if(rows.length===0){
+      // Seed the current procedures if the new cloud table is empty.
+      const seed = INITIAL.map(normalizeRecord);
+      const {error:seedError} = await supabaseClient.from(TABLE).upsert(seed,{onConflict:'id'});
+      if(seedError) throw seedError;
+      const result = await supabaseClient.from(TABLE).select('*').order('date',{ascending:false});
+      if(result.error) throw result.error;
+      data = (result.data||[]).map(normalizeRecord);
+    }else{
+      data = rows.map(normalizeRecord);
+    }
+    connected=true;
+    showStatus('Base compartilhada conectada. Alterações visíveis para todos os visitantes.');
+    render();
+  }catch(err){
+    console.error(err);
+    showStatus('Não foi possível conectar ao banco. Confira a URL, a chave e as políticas SQL.',true);
+    data = [...INITIAL];
+    render();
+  }
+}
+function normalizeRecord(x){
+  return {
+    id:String(x.id ?? ('p'+Date.now()+Math.random().toString(16).slice(2))),
+    cat:x.cat||'Geral',title:x.title||'',date:x.date||'',
+    status:x.status||'VIGENTE',keywords:x.keywords||'',body:x.body||'',
+    steps:Array.isArray(x.steps)?x.steps:(typeof x.steps==='string'?safeJsonArray(x.steps):[]),
+    template:x.template||'',source:x.source||''
+  };
+}
+function safeJsonArray(v){try{return JSON.parse(v)}catch{return v?[v]:[]}}
+function cats(){return [...new Set(data.map(x=>x.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
+function renderCats(){
+  const sel=document.getElementById('cat');
+  sel.innerHTML='<option value="">Todas as categorias</option>'+cats().map(c=>`<option value="${esc(c)}" ${c===selectedCat?'selected':''}>${esc(c)}</option>`).join('');
+  document.getElementById('navCats').innerHTML='<button class="'+(!selectedCat?'active':'')+'" onclick="setCat(\'\')">Todas</button>'+
+    cats().map(c=>`<button class="${selectedCat===c?'active':''}" onclick="setCat(${JSON.stringify(c)})">${esc(c)}</button>`).join('');
+}
+function setCat(c){selectedCat=c;document.getElementById('cat').value=c;render()}
+function render(){
+  renderCats();
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const arr=data.filter(x=>{
+    const hay=[x.title,x.cat,x.keywords,x.body,x.template,x.source,(x.steps||[]).join(' ')].join(' ').toLowerCase();
+    return (!q||hay.includes(q))&&(!selectedCat||x.cat===selectedCat);
+  }).sort((a,b)=>dateSort(b.date)-dateSort(a.date));
+  document.getElementById('count').textContent=arr.length;
+  document.getElementById('grid').innerHTML=arr.length?arr.map(card).join(''):'<div class="empty">Nenhum procedimento encontrado. Tente outra palavra ou categoria.</div>';
+}
+function dateSort(v){
+  if(!v)return 0;
+  const iso=Date.parse(v);
+  if(!Number.isNaN(iso))return iso;
+  const m=String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m?new Date(+m[3],+m[2]-1,+m[1]).getTime():0;
+}
+function card(x){
+  return `<article class="card">
+    <div class="meta"><span class="badge">${esc(x.cat)}</span><span class="badge ok">${esc(x.status||'VIGENTE')}</span><span>${esc(x.date||'')}</span></div>
+    <h2>${esc(x.title)}</h2>
+    <div class="body">${esc(x.body)}</div>
+    ${x.steps?.length?'<ol>'+x.steps.map(s=>`<li>${esc(s)}</li>`).join('')+'</ol>':''}
+    ${x.template?`<details><summary>Ver máscara/modelo</summary><pre>${esc(x.template)}</pre></details>`:''}
+    <div class="meta">Fonte: ${esc(x.source||'alinhamento VPB')}</div>
+    <div class="actions"><button class="small" onclick="editItem('${esc(x.id)}')">Editar</button><button class="secondary small" onclick="copyItem('${esc(x.id)}')">Duplicar</button><button class="danger small" onclick="deleteItem('${esc(x.id)}')">Excluir</button></div>
+  </article>`;
+}
+document.getElementById('search').addEventListener('input',render);
+document.getElementById('cat').addEventListener('change',e=>{selectedCat=e.target.value;render()});
+
+function newItem(){
+ editingId=null; document.getElementById('editorTitle').textContent='Novo procedimento';
+ ['f_title','f_cat','f_date','f_keywords','f_body','f_steps','f_template','f_source'].forEach(id=>document.getElementById(id).value='');
+ document.getElementById('f_status').value='VIGENTE'; document.getElementById('editor').style.display='block'; window.scrollTo({top:0,behavior:'smooth'});
+}
+function editItem(id){
+ const x=data.find(y=>y.id===id); if(!x)return; editingId=id;
+ document.getElementById('editorTitle').textContent='Editar procedimento';
+ document.getElementById('f_title').value=x.title||'';document.getElementById('f_cat').value=x.cat||'';document.getElementById('f_date').value=toInputDate(x.date);
+ document.getElementById('f_status').value=x.status||'VIGENTE';document.getElementById('f_keywords').value=x.keywords||'';document.getElementById('f_body').value=x.body||'';
+ document.getElementById('f_steps').value=(x.steps||[]).join('\n');document.getElementById('f_template').value=x.template||'';document.getElementById('f_source').value=x.source||'';
+ document.getElementById('editor').style.display='block';window.scrollTo({top:0,behavior:'smooth'});
+}
+function toInputDate(v){
+ if(!v)return '';
+ if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;
+ const m=String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+ return m?`${m[3]}-${m[2]}-${m[1]}`:'';
+}
+function displayDate(v){
+ if(!v)return '';
+ if(/^\d{4}-\d{2}-\d{2}$/.test(v)){const [y,m,d]=v.split('-');return `${d}/${m}/${y}`;}
+ return v;
+}
+async function saveItem(){
+ const title=document.getElementById('f_title').value.trim(); if(!title){alert('Informe o título.');return}
+ const obj=normalizeRecord({id:editingId||('p'+Date.now()),title,cat:document.getElementById('f_cat').value.trim()||'Geral',date:displayDate(document.getElementById('f_date').value)||displayDate(new Date().toISOString().slice(0,10)),status:document.getElementById('f_status').value,keywords:document.getElementById('f_keywords').value.trim(),body:document.getElementById('f_body').value.trim(),steps:document.getElementById('f_steps').value.split('\n').map(s=>s.trim()).filter(Boolean),template:document.getElementById('f_template').value,source:document.getElementById('f_source').value.trim()});
+ try{
+   if(!supabaseClient||!connected)throw new Error('A base compartilhada ainda não está conectada.');
+   const {error}=await supabaseClient.from(TABLE).upsert(obj,{onConflict:'id'});
+   if(error)throw error;
+   if(editingId)data=data.map(x=>x.id===editingId?obj:x);else data.push(obj);
+   closeEditor();render();showStatus('Procedimento salvo e compartilhado.');
+ }catch(e){console.error(e);alert('Não foi possível salvar na nuvem. Confira a conexão e as políticas do banco.');}
+}
+async function deleteItem(id){
+ if(!confirm('Excluir este procedimento para todos os usuários?'))return;
+ try{
+   if(!supabaseClient||!connected)throw new Error('Base desconectada');
+   const {error}=await supabaseClient.from(TABLE).delete().eq('id',id);
+   if(error)throw error;
+   data=data.filter(x=>x.id!==id);render();showStatus('Procedimento excluído da base compartilhada.');
+ }catch(e){console.error(e);alert('Não foi possível excluir na nuvem. Confira a conexão e as políticas do banco.');}
+}
+async function copyItem(id){
+ const x=data.find(y=>y.id===id);if(!x)return;
+ const copy={...x,id:'p'+Date.now(),title:x.title+' — cópia',status:'VIGENTE'};
+ try{
+   if(!supabaseClient||!connected)throw new Error('Base desconectada');
+   const {error}=await supabaseClient.from(TABLE).insert(copy);
+   if(error)throw error;
+   data.push(copy);render();showStatus('Procedimento duplicado e compartilhado.');
+ }catch(e){console.error(e);alert('Não foi possível duplicar na nuvem. Confira a conexão e as políticas do banco.');}
+}
+function closeEditor(){document.getElementById('editor').style.display='none'}
+function exportData(){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='procedimentos-vpb-base.json';a.click();URL.revokeObjectURL(a.href)}
+async function importData(ev){
+ const f=ev.target.files[0];if(!f)return;
+ const r=new FileReader();
+ r.onload=async()=>{
+  try{
+   const x=JSON.parse(r.result);if(!Array.isArray(x))throw 0;
+   if(!supabaseClient||!connected)throw new Error('Base desconectada');
+   const records=x.map(normalizeRecord);
+   const {error}=await supabaseClient.from(TABLE).upsert(records,{onConflict:'id'});
+   if(error)throw error;
+   const result=await supabaseClient.from(TABLE).select('*').order('date',{ascending:false});
+   if(result.error)throw result.error;
+   data=(result.data||[]).map(normalizeRecord);render();alert('Base importada e sincronizada.');
+  }catch(e){console.error(e);alert('Não foi possível importar. Verifique o JSON e a conexão com o banco.')}
+  ev.target.value='';
+ };
+ r.readAsText(f);
+}
+startDatabase();
+
+</script>
+</body>
+</html>
