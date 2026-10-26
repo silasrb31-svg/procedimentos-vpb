@@ -183,7 +183,15 @@ document.getElementById('navCats').addEventListener('click', function(e){
   if (!button) return;
   setCat(button.dataset.cat);
 });
-function setCat(c){selectedCat=c;document.getElementById('cat').value=c;render()}
+function setCat(c) {
+  selectedCat = c || '';
+
+  const select = document.getElementById('cat');
+  select.value = selectedCat;
+
+  renderCats();
+  render();
+}
 function render(){
   renderCats();
   const q=document.getElementById('search').value.toLowerCase().trim();
