@@ -163,11 +163,26 @@ function normalizeRecord(x){
 function safeJsonArray(v){try{return JSON.parse(v)}catch{return v?[v]:[]}}
 function cats(){return [...new Set(data.map(x=>x.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
 function renderCats(){
-  const sel=document.getElementById('cat');
-  sel.innerHTML='<option value="">Todas as categorias</option>'+cats().map(c=>`<option value="${esc(c)}" ${c===selectedCat?'selected':''}>${esc(c)}</option>`).join('');
-  document.getElementById('navCats').innerHTML='<button class="'+(!selectedCat?'active':'')+'" onclick="setCat(\'\')">Todas</button>'+
-    cats().map(c=>`<button class="${selectedCat===c?'active':''}" onclick="setCat(${JSON.stringify(c)})">${esc(c)}</button>`).join('');
+  const sel = document.getElementById('cat');
+
+  sel.innerHTML =
+    '<option value="">Todas as categorias</option>' +
+    cats().map(c =>
+      `<option value="${esc(c)}" ${c === selectedCat ? 'selected' : ''}>${esc(c)}</option>`
+    ).join('');
+
+  document.getElementById('navCats').innerHTML =
+    `<button type="button" data-cat="" class="${!selectedCat ? 'active' : ''}">Todas</button>` +
+    cats().map(c =>
+      `<button type="button" data-cat="${esc(c)}" class="${selectedCat === c ? 'active' : ''}">${esc(c)}</button>`
+    ).join('');
 }
+
+document.getElementById('navCats').addEventListener('click', function(e){
+  const button = e.target.closest('button[data-cat]');
+  if (!button) return;
+  setCat(button.dataset.cat);
+});
 function setCat(c){selectedCat=c;document.getElementById('cat').value=c;render()}
 function render(){
   renderCats();
