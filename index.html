@@ -1,4 +1,3 @@
-```
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -255,17 +254,17 @@ function sanitizeRichHtml(value){
 }
 function bodyForDisplay(value){
   const raw=String(value??'');
-  if(/<\\/?(?:b|strong|i|em|u|p|br|ul|ol|li)\\b/i.test(raw)){
+  if(/<\/?(?:b|strong|i|em|u|p|br|ol|ul|li)\b/i.test(raw)){
     return sanitizeRichHtml(raw);
   }
-  return esc(raw).replace(/\\r?\\n/g,'<br>');
+  return esc(raw).replace(/\r?\n/g,'<br>');
 }
 function bodyForEditor(value){
   const raw=String(value??'');
-  if(/<\\/?(?:b|strong|i|em|u|p|br|ul|ol|li)\\b/i.test(raw)){
+  if(/<\/?(?:b|strong|i|em|u|p|br|ol|ul|li)\b/i.test(raw)){
     return sanitizeRichHtml(raw);
   }
-  return esc(raw).replace(/\\r?\\n/g,'<br>');
+  return esc(raw).replace(/\r?\n/g,'<br>');
 }
 function card(x){
   return `<article class="card">
@@ -360,4 +359,3 @@ startDatabase();
 </script>
 </body>
 </html>
-```
