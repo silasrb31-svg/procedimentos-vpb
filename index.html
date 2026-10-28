@@ -1,3 +1,4 @@
+```
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -36,6 +37,13 @@ pre{white-space:pre-wrap;background:#101828;color:#eef4ff;border-radius:9px;padd
 section{margin-top:28px}.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 details{background:#fff;border:1px solid var(--line);border-radius:10px;margin:8px 0;padding:10px 12px}summary{cursor:pointer;font-weight:700}
 #editor{display:none;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+.editor-toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#f4f7fb;border:1px solid var(--line);border-bottom:0;border-radius:9px 9px 0 0}
+.rich-editor{min-height:130px;padding:12px;border:1px solid var(--line);border-radius:0 0 9px 9px;background:#fff;line-height:1.55;outline:none}
+.rich-editor:empty:before{content:attr(data-placeholder);color:#98a2b3;pointer-events:none}
+.rich-editor:focus{outline:2px solid #1457d933;border-color:var(--accent)}
+.rich-editor ul,.rich-editor ol{padding-left:24px}
+.body p{margin:0 0 8px}.body ul,.body ol{padding-left:24px}.body li{margin:4px 0}
+
 .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
 .help{font-size:12px;color:var(--muted);margin-top:6px}
 footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center}
@@ -73,7 +81,18 @@ footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center}
       <input id="f_date" type="date">
       <select id="f_status"><option>VIGENTE</option><option>EVENTUAL</option><option>ARQUIVADO</option></select>
       <input id="f_keywords" class="full" placeholder="Palavras-chave separadas por vírgula">
-      <textarea id="f_body" class="full" rows="4" placeholder="Regra/procedimento"></textarea>
+      <div class="full">
+        <label for="f_body" style="display:block;font-weight:700;margin-bottom:6px">Descrição do procedimento</label>
+        <div class="editor-toolbar" role="toolbar" aria-label="Formatação da descrição">
+          <button type="button" class="secondary small" onclick="formatBody('bold')" title="Negrito"><b>B</b></button>
+          <button type="button" class="secondary small" onclick="formatBody('insertUnorderedList')" title="Lista com marcadores">• Lista</button>
+          <button type="button" class="secondary small" onclick="formatBody('insertOrderedList')" title="Lista numerada">1. Lista</button>
+          <button type="button" class="secondary small" onclick="formatBody('insertParagraph')" title="Novo parágrafo">¶ Parágrafo</button>
+          <button type="button" class="secondary small" onclick="formatBody('removeFormat')" title="Remover formatação">Limpar formatação</button>
+        </div>
+        <div id="f_body" class="rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Digite a descrição do procedimento..."></div>
+        <div class="help">Use os botões para aplicar negrito, listas e parágrafos. A formatação será salva junto com a descrição.</div>
+      </div>
       <textarea id="f_steps" class="full" rows="5" placeholder="Passos, um por linha"></textarea>
       <textarea id="f_template" class="full" rows="7" placeholder="Máscara/modelo (opcional)"></textarea>
       <input id="f_source" placeholder="Fonte/data do alinhamento">
@@ -209,11 +228,50 @@ function dateSort(v){
   const m=String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   return m?new Date(+m[3],+m[2]-1,+m[1]).getTime():0;
 }
+function formatBody(command){
+  const editor=document.getElementById('f_body');
+  editor.focus();
+  document.execCommand(command,false,null);
+}
+function sanitizeRichHtml(value){
+  const input=String(value??'');
+  const doc=new DOMParser().parseFromString(input,'text/html');
+  const allowed=new Set(['B','STRONG','I','EM','U','P','BR','UL','OL','LI']);
+  function clean(node){
+    if(node.nodeType===Node.TEXT_NODE)return document.createTextNode(node.textContent);
+    if(node.nodeType!==Node.ELEMENT_NODE)return document.createDocumentFragment();
+    const fragment=document.createDocumentFragment();
+    if(!allowed.has(node.tagName)){
+      [...node.childNodes].forEach(child=>fragment.appendChild(clean(child)));
+      return fragment;
+    }
+    const el=document.createElement(node.tagName.toLowerCase());
+    [...node.childNodes].forEach(child=>el.appendChild(clean(child)));
+    return el;
+  }
+  const out=document.createElement('div');
+  [...doc.body.childNodes].forEach(node=>out.appendChild(clean(node)));
+  return out.innerHTML;
+}
+function bodyForDisplay(value){
+  const raw=String(value??'');
+  if(/<\\/?(?:b|strong|i|em|u|p|br|ul|ol|li)\\b/i.test(raw)){
+    return sanitizeRichHtml(raw);
+  }
+  return esc(raw).replace(/\\r?\\n/g,'<br>');
+}
+function bodyForEditor(value){
+  const raw=String(value??'');
+  if(/<\\/?(?:b|strong|i|em|u|p|br|ul|ol|li)\\b/i.test(raw)){
+    return sanitizeRichHtml(raw);
+  }
+  return esc(raw).replace(/\\r?\\n/g,'<br>');
+}
 function card(x){
   return `<article class="card">
     <div class="meta"><span class="badge">${esc(x.cat)}</span><span class="badge ok">${esc(x.status||'VIGENTE')}</span><span>${esc(x.date||'')}</span></div>
     <h2>${esc(x.title)}</h2>
-    <div class="body">${esc(x.body)}</div>
+    <div class="body">${bodyForDisplay(x.body)}</div>
     ${x.steps?.length?'<ol>'+x.steps.map(s=>`<li>${esc(s)}</li>`).join('')+'</ol>':''}
     ${x.template?`<details><summary>Ver máscara/modelo</summary><pre>${esc(x.template)}</pre></details>`:''}
     <div class="meta">Fonte: ${esc(x.source||'alinhamento VPB')}</div>
@@ -225,14 +283,14 @@ document.getElementById('cat').addEventListener('change',e=>{selectedCat=e.targe
 
 function newItem(){
  editingId=null; document.getElementById('editorTitle').textContent='Novo procedimento';
- ['f_title','f_cat','f_date','f_keywords','f_body','f_steps','f_template','f_source'].forEach(id=>document.getElementById(id).value='');
+ ['f_title','f_cat','f_date','f_keywords','f_steps','f_template','f_source'].forEach(id=>document.getElementById(id).value=''); document.getElementById('f_body').innerHTML='';
  document.getElementById('f_status').value='VIGENTE'; document.getElementById('editor').style.display='block'; window.scrollTo({top:0,behavior:'smooth'});
 }
 function editItem(id){
  const x=data.find(y=>y.id===id); if(!x)return; editingId=id;
  document.getElementById('editorTitle').textContent='Editar procedimento';
  document.getElementById('f_title').value=x.title||'';document.getElementById('f_cat').value=x.cat||'';document.getElementById('f_date').value=toInputDate(x.date);
- document.getElementById('f_status').value=x.status||'VIGENTE';document.getElementById('f_keywords').value=x.keywords||'';document.getElementById('f_body').value=x.body||'';
+ document.getElementById('f_status').value=x.status||'VIGENTE';document.getElementById('f_keywords').value=x.keywords||'';document.getElementById('f_body').innerHTML=bodyForEditor(x.body||'');
  document.getElementById('f_steps').value=(x.steps||[]).join('\n');document.getElementById('f_template').value=x.template||'';document.getElementById('f_source').value=x.source||'';
  document.getElementById('editor').style.display='block';window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -249,7 +307,7 @@ function displayDate(v){
 }
 async function saveItem(){
  const title=document.getElementById('f_title').value.trim(); if(!title){alert('Informe o título.');return}
- const obj=normalizeRecord({id:editingId||('p'+Date.now()),title,cat:document.getElementById('f_cat').value.trim()||'Geral',date:displayDate(document.getElementById('f_date').value)||displayDate(new Date().toISOString().slice(0,10)),status:document.getElementById('f_status').value,keywords:document.getElementById('f_keywords').value.trim(),body:document.getElementById('f_body').value.trim(),steps:document.getElementById('f_steps').value.split('\n').map(s=>s.trim()).filter(Boolean),template:document.getElementById('f_template').value,source:document.getElementById('f_source').value.trim()});
+ const obj=normalizeRecord({id:editingId||('p'+Date.now()),title,cat:document.getElementById('f_cat').value.trim()||'Geral',date:displayDate(document.getElementById('f_date').value)||displayDate(new Date().toISOString().slice(0,10)),status:document.getElementById('f_status').value,keywords:document.getElementById('f_keywords').value.trim(),body:sanitizeRichHtml(document.getElementById('f_body').innerHTML).trim(),steps:document.getElementById('f_steps').value.split('\n').map(s=>s.trim()).filter(Boolean),template:document.getElementById('f_template').value,source:document.getElementById('f_source').value.trim()});
  try{
    if(!supabaseClient||!connected)throw new Error('A base compartilhada ainda não está conectada.');
    const {error}=await supabaseClient.from(TABLE).upsert(obj,{onConflict:'id'});
@@ -302,3 +360,4 @@ startDatabase();
 </script>
 </body>
 </html>
+```
