@@ -271,18 +271,7 @@ function card(x){
     <div class="meta"><span class="badge">${esc(x.cat)}</span><span class="badge ok">${esc(x.status||'VIGENTE')}</span><span>${esc(x.date||'')}</span></div>
     <h2>${esc(x.title)}</h2>
     <div class="body">${bodyForDisplay(x.body)}</div>
-    ${String(x.cat || '').toLowerCase().includes('lte') ? `
-  <div class="actions">
-    <a
-      href="https://smartnoc.com.br/login.html"
-      target="_blank"
-      rel="noopener noreferrer"
-      style="display:inline-block; background:var(--accent); color:#fff; padding:9px 12px; border-radius:8px; text-decoration:none; font-weight:700; font-size:13px;"
-    >
-      Abrir SmartNOC — Acesso LTE ↗
-    </a>
-  </div>
-` : ''}
+   
     ${x.steps?.length?'<ol>'+x.steps.map(s=>`<li>${esc(s)}</li>`).join('')+'</ol>':''}
     ${x.template?`<details><summary>Ver máscara/modelo</summary><pre>${esc(x.template)}</pre></details>`:''}
     <div class="meta">Fonte: ${esc(x.source||'alinhamento VPB')}</div>
