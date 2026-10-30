@@ -54,6 +54,29 @@ footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center}
 .evidence-folder h3{margin:0 0 8px;font-size:16px}.evidence-folder p{font-size:13px;color:var(--muted);margin:0 0 12px}
 .evidence-partners{display:flex;flex-wrap:wrap;gap:7px}.evidence-partners a,.evidence-file{display:inline-block;background:#edf3ff;color:#1457d9;padding:7px 10px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700}
 .evidence-partners a:hover,.evidence-file:hover{background:#dce8ff}.evidence-note{background:#fff8e6;border:1px solid #f2d28b;padding:12px;border-radius:9px;font-size:13px;line-height:1.5}
+
+/* Área de evidências: menu lateral + painel de arquivos */
+.evidence-workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start;margin-top:18px}
+.evidence-sidebar{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 4px 16px #10182808}
+.evidence-sidebar h3{margin:4px 8px 12px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.evidence-folder-btn{display:flex;align-items:center;gap:10px;width:100%;padding:12px;margin:4px 0;border-radius:9px;background:transparent;color:#344054;text-align:left;font-weight:650}
+.evidence-folder-btn:hover,.evidence-folder-btn.active{background:#edf3ff;color:var(--accent)}
+.evidence-folder-btn .folder-icon{font-size:20px}
+.evidence-main{min-width:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 4px 16px #10182808}
+.evidence-main-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px}
+.evidence-main-head h3{margin:0 0 5px;font-size:21px}.evidence-main-head p{margin:0;color:var(--muted);font-size:13px}
+.evidence-upload{background:#f8faff;border:1px dashed #b8c8e5;border-radius:12px;padding:16px;margin-bottom:18px}
+.evidence-upload-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}
+.evidence-upload label{display:block;font-size:12px;font-weight:700;margin-bottom:6px;color:#344054}
+.evidence-upload input{width:100%;max-width:100%}
+.evidence-file-list{display:grid;gap:9px}
+.evidence-file-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.evidence-file-name{font-weight:700;overflow-wrap:anywhere}.evidence-file-meta{font-size:12px;color:var(--muted);margin-top:4px}
+.evidence-file-actions{display:flex;gap:7px;flex-shrink:0}.evidence-file-actions a{display:inline-block;text-decoration:none;padding:8px 11px;border-radius:8px;background:#edf3ff;color:var(--accent);font-size:13px;font-weight:700}
+.evidence-empty{padding:30px 16px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px}
+.evidence-status{font-size:13px;margin-top:10px;color:var(--muted)}
+@media(max-width:760px){.evidence-workspace{grid-template-columns:1fr}.evidence-sidebar{position:static}.evidence-folder-btn{display:inline-flex;width:auto}.evidence-upload-grid{grid-template-columns:1fr}.evidence-file-row{align-items:flex-start;flex-direction:column}.evidence-file-actions{flex-wrap:wrap}}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -133,18 +156,34 @@ footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center}
 
 <section id="evidencias-eletricas">
   <div class="section-title"><h2>📂 Evidências Elétricas</h2></div>
-  <p class="body">Repositório organizado por tipo de evidência e parceira. Selecione uma parceira para consultar os arquivos disponíveis naquela categoria.</p>
-  <div class="evidence-folder-grid">
-    <article class="evidence-folder"><h3>⚡ Falta de energia</h3><p>Comprovantes e registros de interrupção no fornecimento elétrico.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Falta de energia','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Falta de energia','AVANTIA')">📁 AVANTIA</a></div></article>
-    <article class="evidence-folder"><h3>🔋 Nobreak / UPS</h3><p>Registros de autonomia, falhas e funcionamento do nobreak.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Nobreak / UPS','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Nobreak / UPS','AVANTIA')">📁 AVANTIA</a></div></article>
-    <article class="evidence-folder"><h3>⚡ Oscilação elétrica</h3><p>Evidências de instabilidade ou variação de energia.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Oscilação elétrica','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Oscilação elétrica','AVANTIA')">📁 AVANTIA</a></div></article>
-    <article class="evidence-folder"><h3>🔌 Queda e retorno de energia</h3><p>Registros dos horários de interrupção e restabelecimento.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Queda e retorno de energia','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Queda e retorno de energia','AVANTIA')">📁 AVANTIA</a></div></article>
-    <article class="evidence-folder"><h3>📡 Alarmes na Gerência GPON</h3><p>Conferência de alarmes, horários e histórico da gerência.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Alarmes na Gerência GPON','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Alarmes na Gerência GPON','AVANTIA')">📁 AVANTIA</a><div style="width:100%;margin-top:6px"><a class="evidence-file" href="./Alarmes%20GPON.pdf" target="_blank" rel="noopener noreferrer">📄 Abrir Alarmes GPON.pdf</a></div></div></article>
-    <article class="evidence-folder"><h3>📝 RACTs e relatórios técnicos</h3><p>Relatórios de atendimento, vistorias e análises técnicas.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'RACTs e relatórios técnicos','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'RACTs e relatórios técnicos','AVANTIA')">📁 AVANTIA</a></div></article>
-    <article class="evidence-folder"><h3>📁 Outras evidências</h3><p>Documentos que não se enquadram nas categorias acima.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Outras evidências','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Outras evidências','AVANTIA')">📁 AVANTIA</a></div></article>
+  <p class="body">Selecione uma parceira no menu lateral para consultar ou enviar arquivos. Os documentos ficam armazenados na nuvem, sem precisar alterar o repositório do site.</p>
+  <div class="evidence-workspace">
+    <aside class="evidence-sidebar" aria-label="Pastas de evidências">
+      <h3>Pastas do repositório</h3>
+      <button type="button" class="evidence-folder-btn active" data-partner="VTAL" onclick="selectEvidenceFolder('VTAL',this)"><span class="folder-icon">📁</span><span>Evidências elétricas - VTAL</span></button>
+      <button type="button" class="evidence-folder-btn" data-partner="WT" onclick="selectEvidenceFolder('WT',this)"><span class="folder-icon">📁</span><span>Evidências elétricas WT</span></button>
+      <button type="button" class="evidence-folder-btn" data-partner="Sitelbra" onclick="selectEvidenceFolder('Sitelbra',this)"><span class="folder-icon">📁</span><span>Evidências Elétricas - Sitelbra</span></button>
+      <div class="help" style="margin:12px 8px 4px">Escolha uma pasta para ver os arquivos daquela parceira.</div>
+    </aside>
+    <div class="evidence-main">
+      <div class="evidence-main-head">
+        <div><h3 id="evidenceCurrentTitle">📁 Evidências elétricas - VTAL</h3><p>Arquivos compartilhados com os usuários da Base Operacional VPB.</p></div>
+        <a class="evidence-file" href="./Alarmes%20GPON.pdf" target="_blank" rel="noopener noreferrer">📄 Manual Alarmes GPON</a>
+      </div>
+      <div class="evidence-upload">
+        <b>＋ Adicionar novo arquivo</b>
+        <p class="help">Selecione um PDF, imagem, planilha ou documento. Depois clique em Enviar arquivo.</p>
+        <div class="evidence-upload-grid">
+          <div><label for="evidenceFile">Arquivo</label><input id="evidenceFile" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.xlsx,.xls,.doc,.docx,.txt,.csv"></div>
+          <button type="button" onclick="uploadEvidenceFile()">Enviar arquivo</button>
+        </div>
+        <div id="evidenceUploadStatus" class="evidence-status" role="status"></div>
+      </div>
+      <div class="section-title"><h3 style="margin:0">Arquivos da pasta</h3><button class="secondary small" type="button" onclick="loadEvidenceFiles()">↻ Atualizar</button></div>
+      <div id="evidenceFileList" class="evidence-file-list"><div class="evidence-empty">Carregando arquivos...</div></div>
+      <p class="help">O envio pelo site depende da configuração inicial do armazenamento e das permissões no Supabase.</p>
+    </div>
   </div>
-  <div id="evidenceSelection" class="evidence-note" style="display:none;margin-top:14px" role="status"></div>
-  <p class="evidence-note" style="margin-top:14px"><b>Observação:</b> esta versão apresenta a estrutura de pastas e o link do PDF já publicado. Para permitir que administradores enviem arquivos pelo próprio site e que eles fiquem armazenados na nuvem, será necessário configurar o Supabase Storage e as permissões de administrador.</p>
 </section>
 
 <div class="layout">
@@ -167,6 +206,10 @@ const INITIAL = [{"id":"p001","cat":"Eventos críticos","title":"Massiva / Conce
 const SUPABASE_URL = 'https://ggwicrxbsfxpxalrfodm.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_8NUQPog45vWTGKFHxS1lig_RYtfK7Q3';
 const TABLE = 'procedimentos_vpb';
+const EVIDENCE_BUCKET = 'evidencias-eletricas';
+const EVIDENCE_TABLE = 'evidencias_eletricas';
+let selectedEvidencePartner = 'VTAL';
+
 let supabaseClient = null;
 let data = [];
 let editingId = null, selectedCat = '';
@@ -219,11 +262,13 @@ async function startDatabase(){
     connected=true;
     showStatus('Base compartilhada conectada. Alterações visíveis para todos os visitantes.');
     render();
+    loadEvidenceFiles();
   }catch(err){
     console.error(err);
     showStatus('Não foi possível conectar ao banco. Confira a URL, a chave e as políticas SQL.',true);
     data = [...INITIAL];
     render();
+    const ef=document.getElementById('evidenceFileList');if(ef)ef.innerHTML='<div class="evidence-empty">Não foi possível conectar ao Supabase.</div>';
   }
 }
 function normalizeRecord(x){
@@ -413,11 +458,55 @@ async function importData(ev){
  };
  r.readAsText(f);
 }
-function showEvidenceInfo(event, category, partner){
-  event.preventDefault();
-  const box=document.getElementById('evidenceSelection');
-  box.style.display='block';
-  box.innerHTML='<b>📂 '+esc(category)+' / '+esc(partner)+'</b><br>Esta pasta está criada na estrutura visual. Para disponibilizar arquivos aqui, é necessário cadastrá-los no armazenamento da nuvem (Supabase Storage).';
+function selectEvidenceFolder(partner, button){
+  selectedEvidencePartner = partner;
+  document.querySelectorAll('.evidence-folder-btn').forEach(b=>b.classList.toggle('active', b.dataset.partner===partner));
+  const labels={VTAL:'Evidências elétricas - VTAL',WT:'Evidências elétricas WT',Sitelbra:'Evidências Elétricas - Sitelbra'};
+  document.getElementById('evidenceCurrentTitle').textContent='📁 '+labels[partner];
+  loadEvidenceFiles();
+}
+function setEvidenceStatus(message, error=false){
+  const el=document.getElementById('evidenceUploadStatus');
+  if(el){el.textContent=message;el.style.color=error?'#b42318':'#667085';}
+}
+function formatFileSize(bytes){
+  if(!bytes)return '';
+  const units=['B','KB','MB','GB'];let n=bytes,i=0;while(n>=1024&&i<units.length-1){n/=1024;i++;}
+  return `${n.toFixed(i===0?0:1)} ${units[i]}`;
+}
+async function loadEvidenceFiles(){
+  const box=document.getElementById('evidenceFileList');
+  if(!box)return;
+  if(!supabaseClient){box.innerHTML='<div class="evidence-empty">Não foi possível conectar ao armazenamento. Verifique a conexão com o Supabase.</div>';return;}
+  box.innerHTML='<div class="evidence-empty">Consultando arquivos...</div>';
+  try{
+    const {data:files,error}=await supabaseClient.from(EVIDENCE_TABLE).select('*').eq('partner',selectedEvidencePartner).order('created_at',{ascending:false});
+    if(error)throw error;
+    if(!files||!files.length){box.innerHTML='<div class="evidence-empty">📂 Esta pasta ainda não possui arquivos. Use “Adicionar novo arquivo” para enviar o primeiro documento.</div>';return;}
+    box.innerHTML=files.map(f=>`<div class="evidence-file-row"><div><div class="evidence-file-name">📄 ${esc(f.file_name)}</div><div class="evidence-file-meta">${esc(f.created_at?new Date(f.created_at).toLocaleString('pt-BR'): 'Data não informada')} ${f.file_size?' · '+formatFileSize(f.file_size):''}</div></div><div class="evidence-file-actions"><a href="${esc(f.file_url)}" target="_blank" rel="noopener noreferrer">Abrir arquivo ↗</a></div></div>`).join('');
+  }catch(err){console.error(err);box.innerHTML='<div class="evidence-empty">Não foi possível carregar os arquivos. É necessário configurar a tabela e as permissões do Supabase conforme o arquivo SQL de instruções.</div>';}
+}
+async function uploadEvidenceFile(){
+  const input=document.getElementById('evidenceFile');
+  const file=input?.files?.[0];
+  if(!file){setEvidenceStatus('Selecione um arquivo antes de enviar.',true);return;}
+  if(!supabaseClient){setEvidenceStatus('Banco desconectado. Não foi possível enviar.',true);return;}
+  const maxSize=25*1024*1024;
+  if(file.size>maxSize){setEvidenceStatus('O arquivo ultrapassa o limite de 25 MB.',true);return;}
+  const allowed=/\.(pdf|png|jpe?g|webp|xlsx?|docx?|txt|csv)$/i;
+  if(!allowed.test(file.name)){setEvidenceStatus('Formato não permitido. Envie PDF, imagem, Excel, Word, TXT ou CSV.',true);return;}
+  const safeName=file.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'_');
+  const objectPath=`${selectedEvidencePartner}/${Date.now()}_${safeName}`;
+  setEvidenceStatus('Enviando arquivo para a nuvem...');
+  try{
+    const {data:stored,error:uploadError}=await supabaseClient.storage.from(EVIDENCE_BUCKET).upload(objectPath,file,{cacheControl:'3600',upsert:false,contentType:file.type||'application/octet-stream'});
+    if(uploadError)throw uploadError;
+    const {data:publicData}=supabaseClient.storage.from(EVIDENCE_BUCKET).getPublicUrl(stored.path);
+    const record={partner:selectedEvidencePartner,file_name:file.name,file_path:stored.path,file_url:publicData.publicUrl,file_size:file.size,mime_type:file.type||null};
+    const {error:insertError}=await supabaseClient.from(EVIDENCE_TABLE).insert(record);
+    if(insertError){await supabaseClient.storage.from(EVIDENCE_BUCKET).remove([stored.path]);throw insertError;}
+    input.value='';setEvidenceStatus('Arquivo enviado e disponível para consulta.');await loadEvidenceFiles();
+  }catch(err){console.error(err);setEvidenceStatus('Falha no envio. Verifique se o bucket, a tabela e as permissões do Supabase foram configurados.',true);}
 }
 
 startDatabase();
