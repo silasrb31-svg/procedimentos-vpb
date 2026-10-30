@@ -48,6 +48,12 @@ details{background:#fff;border:1px solid var(--line);border-radius:10px;margin:8
 footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center}
 @media(max-width:850px){.layout{grid-template-columns:1fr}nav{position:static}.toolbar{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}}
 @media print{header,.toolbar,nav,.actions,#editor,#historyControls,footer{display:none!important}.wrap{padding:0}.layout{display:block}.grid{grid-template-columns:1fr 1fr}.card{break-inside:avoid}}
+
+.evidence-folder-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.evidence-folder{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
+.evidence-folder h3{margin:0 0 8px;font-size:16px}.evidence-folder p{font-size:13px;color:var(--muted);margin:0 0 12px}
+.evidence-partners{display:flex;flex-wrap:wrap;gap:7px}.evidence-partners a,.evidence-file{display:inline-block;background:#edf3ff;color:#1457d9;padding:7px 10px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700}
+.evidence-partners a:hover,.evidence-file:hover{background:#dce8ff}.evidence-note{background:#fff8e6;border:1px solid #f2d28b;padding:12px;border-radius:9px;font-size:13px;line-height:1.5}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -123,6 +129,22 @@ footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center}
       Abrir SmartNOC ↗
     </a>
   </div>
+</section>
+
+<section id="evidencias-eletricas">
+  <div class="section-title"><h2>📂 Evidências Elétricas</h2></div>
+  <p class="body">Repositório organizado por tipo de evidência e parceira. Selecione uma parceira para consultar os arquivos disponíveis naquela categoria.</p>
+  <div class="evidence-folder-grid">
+    <article class="evidence-folder"><h3>⚡ Falta de energia</h3><p>Comprovantes e registros de interrupção no fornecimento elétrico.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Falta de energia','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Falta de energia','AVANTIA')">📁 AVANTIA</a></div></article>
+    <article class="evidence-folder"><h3>🔋 Nobreak / UPS</h3><p>Registros de autonomia, falhas e funcionamento do nobreak.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Nobreak / UPS','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Nobreak / UPS','AVANTIA')">📁 AVANTIA</a></div></article>
+    <article class="evidence-folder"><h3>⚡ Oscilação elétrica</h3><p>Evidências de instabilidade ou variação de energia.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Oscilação elétrica','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Oscilação elétrica','AVANTIA')">📁 AVANTIA</a></div></article>
+    <article class="evidence-folder"><h3>🔌 Queda e retorno de energia</h3><p>Registros dos horários de interrupção e restabelecimento.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Queda e retorno de energia','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Queda e retorno de energia','AVANTIA')">📁 AVANTIA</a></div></article>
+    <article class="evidence-folder"><h3>📡 Alarmes na Gerência GPON</h3><p>Conferência de alarmes, horários e histórico da gerência.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Alarmes na Gerência GPON','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Alarmes na Gerência GPON','AVANTIA')">📁 AVANTIA</a><div style="width:100%;margin-top:6px"><a class="evidence-file" href="./Alarmes%20GPON.pdf" target="_blank" rel="noopener noreferrer">📄 Abrir Alarmes GPON.pdf</a></div></div></article>
+    <article class="evidence-folder"><h3>📝 RACTs e relatórios técnicos</h3><p>Relatórios de atendimento, vistorias e análises técnicas.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'RACTs e relatórios técnicos','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'RACTs e relatórios técnicos','AVANTIA')">📁 AVANTIA</a></div></article>
+    <article class="evidence-folder"><h3>📁 Outras evidências</h3><p>Documentos que não se enquadram nas categorias acima.</p><div class="evidence-partners"><a href="#" onclick="showEvidenceInfo(event,'Outras evidências','VTAL')">📁 VTAL</a><a href="#" onclick="showEvidenceInfo(event,'Outras evidências','AVANTIA')">📁 AVANTIA</a></div></article>
+  </div>
+  <div id="evidenceSelection" class="evidence-note" style="display:none;margin-top:14px" role="status"></div>
+  <p class="evidence-note" style="margin-top:14px"><b>Observação:</b> esta versão apresenta a estrutura de pastas e o link do PDF já publicado. Para permitir que administradores enviem arquivos pelo próprio site e que eles fiquem armazenados na nuvem, será necessário configurar o Supabase Storage e as permissões de administrador.</p>
 </section>
 
 <div class="layout">
@@ -391,6 +413,13 @@ async function importData(ev){
  };
  r.readAsText(f);
 }
+function showEvidenceInfo(event, category, partner){
+  event.preventDefault();
+  const box=document.getElementById('evidenceSelection');
+  box.style.display='block';
+  box.innerHTML='<b>📂 '+esc(category)+' / '+esc(partner)+'</b><br>Esta pasta está criada na estrutura visual. Para disponibilizar arquivos aqui, é necessário cadastrá-los no armazenamento da nuvem (Supabase Storage).';
+}
+
 startDatabase();
 
 </script>
